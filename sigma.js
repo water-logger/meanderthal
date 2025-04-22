@@ -749,9 +749,7 @@ WebAssembly.instantiateStreaming = async function (b, x) {
     };
 })();
 
-
-document.addEventListener("DOMContentLoaded", function (event) {
-    const wasmCheatEngine = new WasmCheatEngine();
+const wasmCheatEngine = new WasmCheatEngine();
 
     window.wasmCheat = wasmCheatEngine.getAPI();
     console.log('[cheat engine ig] Initialized. Access API via window.wasmCheat');
@@ -799,4 +797,3 @@ document.addEventListener("DOMContentLoaded", function (event) {
 
     nukeUnityKeyboardCapture();
     keepInputFocused();
-});
