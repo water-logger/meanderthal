@@ -273,8 +273,8 @@ class WasmCheatEngine {
     createUI() {
         this.popupwindow = window.open(
             'about:blank',
-            'Memory Editor',
-            'directories=no,titlebar=no,toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=no,width=350,height=515'
+            '_blank',
+            'titlebar=no,toolbar=no,location=no,status=no,menubar=no,resizable=no,width=350,height=515'
         );
 
         this.mainstyle = document.createElement('style');
