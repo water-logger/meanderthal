@@ -271,6 +271,12 @@ class WasmCheatEngine {
     }
 
     createUI() {
+        this.popupwindow = window.open(
+            'about:blank',
+            'Memory Editor',
+            'directories=no,titlebar=no,toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=no,width=350,height=515'
+        );
+
         this.mainstyle = document.createElement('style');
         this.mainstyle.textContent = `
             .option {
@@ -282,40 +288,48 @@ class WasmCheatEngine {
         this.container.id = "wasm_hax_bg"
         this.container.style.cssText = `
         position: fixed;
-        top: 10px;
-        right: 10px;
-        width: 350px;
+        top: 0px;
+        right: 0px;
+        width: 100%;
         background-color: rgba(0, 0, 0, 0.95);
         color: #eee;
-        border-radius: 5px;
         font-family: monospace;
         z-index: 9999;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-        max-height: 90vh;
+        height: 100%;
         display: flex;
         flex-direction: column;
-        border: 1px solid #444;
+        border: none;
       `;
 
-        const header = document.createElement('div');
-        header.style.cssText = `
-        padding: 10px;
-        border-bottom: 1px solid #444;
-        cursor: move;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background-color: rgba(0, 0, 0, 0);
-        border-radius: 5px 5px 0 0;
-      `;
-        header.innerHTML = `
-        <div id="title">MemEdit</div>
-        <div style="display: flex;">
-          <button id="wce-minimize" style="color: #aaa;background-color: rgba(0, 0, 0, 0);font-family: monospace;border: none;margin-right: 5px;">-</button>
-          <button id="wce-close"style="color: #aaa;background-color: rgba(0, 0, 0, 0);font-family: monospace;border: none;">×</button>
-        </div>
-      `;
-        this.container.appendChild(header);
+      function autoResizeWindow() {
+        setTimeout(() => {
+            // Get actual content size with margins
+            const body = this.popupwindow.body;
+            const html = this.container;
+            
+            const width = Math.max(
+              body.scrollWidth, body.offsetWidth,
+              html.scrollWidth, html.offsetWidth
+            );
+            
+            const height = Math.max(
+              body.scrollHeight, body.offsetHeight,
+              html.scrollHeight, html.offsetHeight
+            );
+            
+            // Add padding for window chrome
+            const chromeWidth = this.popupwindow.outerWidth - this.popupwindow.innerWidth;
+            const chromeHeight = this.popupwindow.outerHeight - this.popupwindow.innerHeight;
+            
+            // Resize with a minimum size
+            this.popupwindow.resizeTo(
+              Math.max(width + chromeWidth + 20, 100),
+              Math.max(height + chromeHeight + 20, 100)
+            );
+          }, 100);
+      }
+      
+      this.popupwindow.addEventListener('load', autoResizeWindow);
 
         this.statusElement = document.createElement('div');
         this.statusElement.style.cssText = `
@@ -401,7 +415,6 @@ class WasmCheatEngine {
         max-height: 200px;
         overflow-y: auto;
         border: 1px solid #444;
-        border-radius: 3px;
       `;
         this.resultsElement = document.createElement('table');
         this.resultsElement.style.cssText = `
@@ -456,25 +469,19 @@ class WasmCheatEngine {
         bookmarksPanel.appendChild(this.bookmarksElement);
         contentArea.appendChild(bookmarksPanel);
 
-        document.body.appendChild(this.container);
-        document.body.appendChild(this.mainstyle);
+        this.popupwindow.document.body.appendChild(this.container);
+        this.popupwindow.document.body.appendChild(this.mainstyle);
 
-        this.setupEventListeners(header);
+        this.setupEventListeners();
     }
 
-    setupEventListeners(header) {
-        this.makeDraggable(header);
-
-        const minimizeBtn = document.getElementById('wce-minimize');
-        let isMinimized = false;
-        let contentHeight = 0;
-
-        document.getElementById("speed").addEventListener("change", (e) => {
-            setGameSpeed(document.getElementById("speed").value);
+    setupEventListeners() {
+        this.popupwindow.document.getElementById("speed").addEventListener("change", (e) => {
+            setGameSpeed(this.popupwindow.document.getElementById("speed").value);
         });
 
-        document.getElementById("autopause").addEventListener("change", (e) => {
-            if (document.getElementById("autopause").value == "on") {
+        this.popupwindow.document.getElementById("autopause").addEventListener("change", (e) => {
+            if (this.popupwindow.document.getElementById("autopause").value == "on") {
                 autopause = true;
             } else {
                 autopause = false;
@@ -487,57 +494,36 @@ class WasmCheatEngine {
             }
 
             setGameSpeed(0);
-            document.getElementById("title").textContent = "MemEdit (Paused)";
         });
 
         this.container.addEventListener("mouseout", (e) => {
-            setGameSpeed(document.getElementById("speed").value);
-            document.getElementById("title").textContent = "MemEdit";
+            setGameSpeed(this.popupwindow.document.getElementById("speed").value);
         });
 
-        minimizeBtn.addEventListener('click', () => {
-            const contentArea = this.container.querySelector('div:nth-child(3)');
-            if (isMinimized) {
-                contentArea.style.display = 'block';
-                contentArea.style.height = contentHeight + 'px';
-                minimizeBtn.textContent = '-';
-            } else {
-                contentHeight = contentArea.offsetHeight;
-                contentArea.style.display = 'none';
-                minimizeBtn.textContent = '+';
-            }
-            isMinimized = !isMinimized;
-        });
-
-        document.getElementById('wce-close').addEventListener('click', () => {
-            document.body.removeChild(this.container);
-            document.body.removeChild(this.mainstyle);
-        });
-
-        document.getElementById('wce-first-scan').addEventListener('click', () => {
-            const value = document.getElementById('wce-value').value;
-            const valueType = document.getElementById('wce-value-type').value;
-            const compareType = document.getElementById('wce-search-type').value;
+        this.popupwindow.document.getElementById('wce-first-scan').addEventListener('click', () => {
+            const value = this.popupwindow.document.getElementById('wce-value').value;
+            const valueType = this.popupwindow.document.getElementById('wce-value-type').value;
+            const compareType = this.popupwindow.document.getElementById('wce-search-type').value;
 
             this.valueType = valueType;
             const results = this.scanMemory(value, valueType, compareType);
             this.updateResultsUI(results);
 
-            document.getElementById('wce-next-scan').disabled = false;
+            this.popupwindow.document.getElementById('wce-next-scan').disabled = false;
         });
 
-        document.getElementById('wce-next-scan').addEventListener('click', () => {
-            const value = document.getElementById('wce-value').value;
-            const compareType = document.getElementById('wce-search-type').value;
+        this.popupwindow.document.getElementById('wce-next-scan').addEventListener('click', () => {
+            const value = this.popupwindow.document.getElementById('wce-value').value;
+            const compareType = this.popupwindow.document.getElementById('wce-search-type').value;
 
             const results = this.narrowSearch(value, compareType);
             this.updateResultsUI(results);
         });
 
-        document.getElementById('wce-reset').addEventListener('click', () => {
+        this.popupwindow.document.getElementById('wce-reset').addEventListener('click', () => {
             this.foundAddresses = [];
             this.scanHistory = [];
-            document.getElementById('wce-next-scan').disabled = true;
+            this.popupwindow.document.getElementById('wce-next-scan').disabled = true;
             this.updateResultsUI([]);
         });
     }
@@ -552,8 +538,8 @@ class WasmCheatEngine {
             e.preventDefault();
             pos3 = e.clientX;
             pos4 = e.clientY;
-            document.onmouseup = closeDragElement;
-            document.onmousemove = elementDrag;
+            this.popupwindow.document.onmouseup = closeDragElement;
+            this.popupwindow.document.onmousemove = elementDrag;
         }
 
         const self = this;
@@ -571,13 +557,13 @@ class WasmCheatEngine {
         }
 
         function closeDragElement() {
-            document.onmouseup = null;
-            document.onmousemove = null;
+            this.popupwindow.document.onmouseup = null;
+            this.popupwindow.document.onmousemove = null;
         }
     }
 
     updateResultsUI(results) {
-        const tbody = document.getElementById('wce-results-body');
+        const tbody = this.popupwindow.document.getElementById('wce-results-body');
 
         if (results.length === 0) {
             tbody.innerHTML = '<tr><td colspan="3" style="padding: 10px; color: #aaa; text-align: center;">No results found</td></tr>';
@@ -599,7 +585,7 @@ class WasmCheatEngine {
 
         this.statusElement.textContent = `Found ${results.length} results`;
 
-        const editButtons = document.querySelectorAll('.wce-edit-value');
+        const editButtons = this.popupwindow.document.querySelectorAll('.wce-edit-value');
         editButtons.forEach(button => {
             button.addEventListener('click', (e) => {
                 const address = parseInt(e.target.getAttribute('data-address'));
@@ -614,7 +600,7 @@ class WasmCheatEngine {
             });
         });
 
-        const bookmarkButtons = document.querySelectorAll('.wce-bookmark');
+        const bookmarkButtons = this.popupwindow.document.querySelectorAll('.wce-bookmark');
         bookmarkButtons.forEach(button => {
             button.addEventListener('click', (e) => {
                 const address = parseInt(e.target.getAttribute('data-address'));
@@ -629,7 +615,7 @@ class WasmCheatEngine {
     }
 
     updateBookmarksUI() {
-        const tbody = document.getElementById('wce-bookmarks-body');
+        const tbody = this.popupwindow.document.getElementById('wce-bookmarks-body');
 
         if (Object.keys(this.bookmarks).length === 0) {
             tbody.innerHTML = '<tr><td colspan="4" style="padding: 10px;color: #aaa; text-align: center;">No bookmarks yet</td></tr>';
@@ -652,7 +638,7 @@ class WasmCheatEngine {
         `;
         }).join('');
 
-        const editButtons = document.querySelectorAll('.wce-bookmark-edit');
+        const editButtons = this.popupwindow.document.querySelectorAll('.wce-bookmark-edit');
         editButtons.forEach(button => {
             button.addEventListener('click', (e) => {
                 const address = parseInt(e.target.getAttribute('data-address'));
@@ -667,7 +653,7 @@ class WasmCheatEngine {
             });
         });
 
-        const removeButtons = document.querySelectorAll('.wce-bookmark-remove');
+        const removeButtons = this.popupwindow.document.querySelectorAll('.wce-bookmark-remove');
         removeButtons.forEach(button => {
             button.addEventListener('click', (e) => {
                 const address = parseInt(e.target.getAttribute('data-address'));
@@ -749,51 +735,10 @@ WebAssembly.instantiateStreaming = async function (b, x) {
     };
 })();
 
-const wasmCheatEngine = new WasmCheatEngine();
+
+document.addEventListener("DOMContentLoaded", function (event) {
+    const wasmCheatEngine = new WasmCheatEngine();
 
     window.wasmCheat = wasmCheatEngine.getAPI();
     console.log('[cheat engine ig] Initialized. Access API via window.wasmCheat');
-
-    const inputs = document.querySelectorAll("input, textarea, #speed, [contenteditable='true']");
-
-    function nukeUnityKeyboardCapture() {
-        const events = ['keydown', 'keyup', 'keypress'];
-
-        events.forEach(type => {
-            const listeners = window.getElementListeners;
-            if (listeners) {
-                for (const l of [...listeners]) {
-                    window.removeEventListener(type, l.listener || l, true);
-                }
-            }
-
-            window.addEventListener(type, (e) => {
-                const activeElement = document.activeElement;
-                if (activeElement && (activeElement.matches("input, textarea, #speed, [contenteditable='true']"))) {
-                    e.stopImmediatePropagation();
-                }
-            }, true);
-        });
-
-        const canvas = document.querySelector("canvas");
-        if (canvas) {
-            canvas.focus = () => {
-                const activeElement = document.activeElement;
-                if (!activeElement || !activeElement.matches("input, textarea, #speed, [contenteditable='true']")) {
-                    HTMLElement.prototype.focus.call(canvas);
-                }
-            };
-        }
-    }
-
-    function keepInputFocused() {
-        setInterval(() => {
-            const activeElement = document.activeElement;
-            if (activeElement && activeElement.matches("input, textarea, #speed, [contenteditable='true']")) {
-                activeElement.focus();
-            }
-        }, 100);
-    }
-
-    nukeUnityKeyboardCapture();
-    keepInputFocused();
+});
